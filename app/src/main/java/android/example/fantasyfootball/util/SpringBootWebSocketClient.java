@@ -65,6 +65,8 @@ public final class SpringBootWebSocketClient extends WebSocketListener {
         return null;
     }
 
+
+
     public void connect(String address) {
         OkHttpClient client = new OkHttpClient.Builder()
                 .readTimeout(0,  TimeUnit.MILLISECONDS)
