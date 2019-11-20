@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -54,6 +55,7 @@ public class BeforeDraft extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_before_draft);
         messageText = (EditText)findViewById(R.id.message_text);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         final Intent i = getIntent();
         String draftDets = i.getStringExtra("sampleObject");

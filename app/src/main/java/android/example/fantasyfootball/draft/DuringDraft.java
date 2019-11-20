@@ -13,10 +13,15 @@ import android.example.fantasyfootball.util.PicksAdapter;
 import android.example.fantasyfootball.util.Player;
 import android.example.fantasyfootball.util.PlayerTableDataAdapter;
 import android.example.fantasyfootball.util.RestApiCalls;
+import android.example.fantasyfootball.util.SpringBootWebSocketClient;
+import android.example.fantasyfootball.util.StompMessage;
+import android.example.fantasyfootball.util.StompMessageListener;
 import android.example.fantasyfootball.util.TokenAccess;
+import android.example.fantasyfootball.util.TopicHandler;
 import android.example.fantasyfootball.util.VolleyCallback;
 import android.example.fantasyfootball.util.VolleyCallbackWithArray;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -44,6 +49,7 @@ public class DuringDraft extends AppCompatActivity {
     private ArrayList<String> pickNums;
     private ArrayList<String> roundNum;
     private ArrayList<Player> playersInDraft;
+    private SpringBootWebSocketClient client;
     private PicksAdapter adapter;
     private PlayerTableDataAdapter playerTableDataAdapter;
     private String draftId;
@@ -51,13 +57,21 @@ public class DuringDraft extends AppCompatActivity {
     private Spinner menu;
     private TextView selectedPlayer;
     private Player playerSelected;
-    private static final String[] array = { "This", "is", "a", "test" };
+    private static final String[] differentPages = { "Draft", "Team", "Draft History", "Message Board"};
     private static final String[] TABLE_HEADERS = { "rank", "first", "last", "pos" };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_during_draft);
+        init();
+    }
+
+    private void init() {
+        if (TokenAccess.hasTokenExpired(getApplicationContext())) {
+            finish();
+        }
+
         draftButton = findViewById(R.id.draft_button);
         selectedPlayer = findViewById(R.id.player_selected);
         draftButton.setEnabled(false);
@@ -72,7 +86,7 @@ public class DuringDraft extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> adapterView) {
                 // TODO Auto-generated method stub
             }});
-        ArrayAdapter<String> items = new ArrayAdapter<String>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item, array);
+        ArrayAdapter<String> items = new ArrayAdapter<String>(getApplicationContext(), R.layout.support_simple_spinner_dropdown_item, differentPages);
         items.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(items);
         items.notifyDataSetChanged();
@@ -88,8 +102,25 @@ public class DuringDraft extends AppCompatActivity {
         }
         initPickBar();
         createTable();
+        connectToSocket();
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        client.disconnect();
+    }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        client.disconnect();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        init();
     }
 
     private void createTable() {
@@ -174,6 +205,7 @@ public class DuringDraft extends AppCompatActivity {
             json.put("pickNumber", Integer.valueOf(pickNums.get(0)));
             json.put("thePlayer", playerSelected.getJson());
             json.put("draftId", Integer.valueOf(draftId));
+            json.put("username", TokenAccess.getUserName(getApplicationContext()));
 
             RestApiCalls.draftPlayer(getApplicationContext(), json, draftId, new VolleyCallback() {
                 @Override
@@ -192,5 +224,78 @@ public class DuringDraft extends AppCompatActivity {
             playerSelected = clickSelected;
             selectedPlayer.setText(clickSelected.getFirstName() + " " + clickSelected.getLastName());
         }
+    }
+
+    private void updateViews(final JSONObject jsonObject){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int i = 0;
+                JSONObject selectedPlayerJson = null;
+                int pickNum = -1;
+                int round = -1;
+                String userName = "";
+                int theId = -1;
+                try {
+                    selectedPlayerJson = jsonObject.getJSONObject("thePlayer");
+                    round = jsonObject.getInt("round");
+                    pickNum = jsonObject.getInt("pickNumber");
+                    userName = jsonObject.getString("username");
+                    theId = selectedPlayerJson.getInt("id");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                for (Player p : playersInDraft) {
+                    if (p.getId() == theId) {
+                        break;
+                    }
+                    i++;
+                }
+
+                // TODO: verify that it was picked
+                if (teamNames.get(0).compareTo(userName) == 0 && Integer.valueOf(pickNums.get(0)) == pickNum && Integer.valueOf(roundNum.get(0)) == round) {
+                    teamNames.remove(0);
+                    pickNums.remove(0);
+                    roundNum.remove(0);
+                }
+                if (theId != -1) {
+                    playersInDraft.remove(i);
+                }
+
+                playerSelected = null;
+                selectedPlayer.setText("");
+                if (teamNames.size() > 0 && teamNames.get(0).compareTo(TokenAccess.getUserName(getApplicationContext())) == 0) {
+                    draftButton.setEnabled(true);
+                } else {
+                    draftButton.setEnabled(false);
+                }
+
+                adapter.notifyDataSetChanged();
+                playerTableDataAdapter.notifyDataSetChanged();
+
+            }
+        });
+    }
+
+    private void connectToSocket() {
+        String charRoom = "/draft/pickSelected/" + draftId;
+        client = new SpringBootWebSocketClient();
+        client.setId("sub-001");
+        TopicHandler handler = client.subscribe(charRoom);
+        handler.addListener(new StompMessageListener() {
+            @Override
+            public void onMessage(StompMessage message) {
+                try {
+                    System.out.println("Let's see");
+                    JSONObject jsonObject = new JSONObject(message.getContent());
+                    updateViews(jsonObject);
+
+                }catch (JSONException err){
+                    Log.d("Error", err.toString());
+                }
+            }
+        });
+        client.connect("ws://10.0.2.2:8000/draft-socket");
     }
 }
