@@ -22,6 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -41,12 +42,15 @@ public class DuringDraft extends AppCompatActivity {
 
     private ArrayList<String> teamNames;
     private ArrayList<String> pickNums;
+    private ArrayList<String> roundNum;
     private ArrayList<Player> playersInDraft;
     private PicksAdapter adapter;
     private PlayerTableDataAdapter playerTableDataAdapter;
     private String draftId;
     private Button draftButton;
     private Spinner menu;
+    private TextView selectedPlayer;
+    private Player playerSelected;
     private static final String[] array = { "This", "is", "a", "test" };
     private static final String[] TABLE_HEADERS = { "rank", "first", "last", "pos" };
 
@@ -55,6 +59,7 @@ public class DuringDraft extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_during_draft);
         draftButton = findViewById(R.id.draft_button);
+        selectedPlayer = findViewById(R.id.player_selected);
         draftButton.setEnabled(false);
         Spinner spinner = (Spinner) findViewById(R.id.menu_for_draft);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -94,7 +99,7 @@ public class DuringDraft extends AppCompatActivity {
         tableView.setDataAdapter(playerTableDataAdapter);
         tableView.setHeaderAdapter(new SimpleTableHeaderAdapter(this, TABLE_HEADERS));
         tableView.addDataClickListener(new PlayerClickListener());
-        RestApiCalls.getResponseArray(getApplicationContext(), "api/getPicks/" + draftId,new VolleyCallbackWithArray() {
+        RestApiCalls.getResponseArray(getApplicationContext(), "api/getPlayersRemaining/" + draftId,new VolleyCallbackWithArray() {
             @Override
             public void onSuccess(JSONArray response) {
                 for (int i = 0; i< response.length(); i++) {
@@ -105,6 +110,8 @@ public class DuringDraft extends AppCompatActivity {
                         player.setFirstName(json.getString("firstName"));
                         player.setLastName(json.getString("lastName"));
                         player.setPostion(json.getString("postion"));
+                        player.setId(json.getInt("id"));
+                        player.setTeam(json.getString("team"));
                         playersInDraft.add(player);
 
                     } catch (JSONException e) {
@@ -119,6 +126,7 @@ public class DuringDraft extends AppCompatActivity {
     private void initPickBar() {
         teamNames = new ArrayList<>();
         pickNums = new ArrayList<>();
+        roundNum = new ArrayList<>();
 
         RecyclerView myList = (RecyclerView) findViewById(R.id.pick_list);
         adapter = new PicksAdapter(getApplicationContext(), teamNames, pickNums);
@@ -141,8 +149,10 @@ public class DuringDraft extends AppCompatActivity {
                             draftButton.setEnabled(true);
 
                         String pick = (response.getJSONObject(i)).getString("pickNumber");
+                        String round = (response.getJSONObject(i)).getString("round");
                         teamNames.add(team);
                         pickNums.add(pick);
+                        roundNum.add(round);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -154,12 +164,33 @@ public class DuringDraft extends AppCompatActivity {
 
     }
 
+    public void draft_player(View view) throws JSONException {
+        if (playerSelected == null) {
+            Toast.makeText(getApplicationContext(), "Please select a player", Toast.LENGTH_LONG).show();
+        } else {
+            JSONObject json = new JSONObject();
+            //obj.put("id",id);
+            json.put("round", Integer.valueOf(roundNum.get(0)));
+            json.put("pickNumber", Integer.valueOf(pickNums.get(0)));
+            json.put("thePlayer", playerSelected.getJson());
+            json.put("draftId", Integer.valueOf(draftId));
+
+            RestApiCalls.draftPlayer(getApplicationContext(), json, draftId, new VolleyCallback() {
+                @Override
+                public void onSuccess(JSONObject response) {
+                    Toast.makeText(getApplicationContext(), "Drafted!", Toast.LENGTH_LONG).show();
+                    playerSelected = null;
+                    selectedPlayer.setText("");
+                }
+            });
+        }
+    }
+
     private class PlayerClickListener implements TableDataClickListener<Player> {
         @Override
-        public void onDataClicked(int rowIndex, Player clickedCar) {
-            System.out.println("I see clicked");
-//            String clickedCarString = clickedCar.getProducer().getName() + " " + clickedCar.getName();
-//            Toast.makeText(getContext(), clickedCarString, Toast.LENGTH_SHORT).show();
+        public void onDataClicked(int rowIndex, Player clickSelected) {
+            playerSelected = clickSelected;
+            selectedPlayer.setText(clickSelected.getFirstName() + " " + clickSelected.getLastName());
         }
     }
 }

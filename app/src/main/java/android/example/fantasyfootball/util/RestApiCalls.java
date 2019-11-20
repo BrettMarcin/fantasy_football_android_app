@@ -243,4 +243,30 @@ public class RestApiCalls {
                 };
         MySingleton.getInstance(context).addToRequestQue(jsonObjectRequest);
     }
+
+    public static void draftPlayer(final Context context, JSONObject thePlayer, String draftId, final VolleyCallback callback) {
+        String url="http://10.0.2.2:8000/api/pickPlayer/" + draftId;
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, thePlayer,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        callback.onSuccess(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(LOG_TAG, "Failed on: ");
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer " + TokenAccess.getAccessToken(context));
+                return headers;
+            }
+        };
+        MySingleton.getInstance(context).addToRequestQue(req);
+    }
 }

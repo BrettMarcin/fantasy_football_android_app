@@ -27,7 +27,8 @@
                 android:id="@+id/draft_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Draft" />
+                android:text="Draft"
+                android:onClick="draft_player"/>
         </TableRow>
     </TableLayout>
 

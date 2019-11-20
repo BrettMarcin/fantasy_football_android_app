@@ -1,5 +1,8 @@
 package android.example.fantasyfootball.util;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Player {
 
     private int id;
@@ -183,5 +186,22 @@ public class Player {
 
     public void setRec(int rec) {
         this.rec = rec;
+    }
+
+    public JSONObject getJson() {
+        final JSONObject obj=new JSONObject();
+        try{
+            obj.put("id",id);
+            obj.put("firstName",firstName);
+            obj.put("lastName",lastName);
+            obj.put("rank_player",rank_player);
+            obj.put("postion",postion);
+            obj.put("team",team);
+
+        }catch (JSONException e)
+        {
+            e.printStackTrace();
+        }
+        return obj;
     }
 }
