@@ -103,8 +103,10 @@ public class DuringDraft extends AppCompatActivity {
                 TableView<Player> tableView = (TableView<Player>) findViewById(R.id.draft_table);//team_table
                 TableView<Player> teamTable = (TableView<Player>) findViewById(R.id.team_table);
                 // set table back to original
-//                currentTeamViewing = TokenAccess.getUserName(getApplicationContext());
-//                createTeamTable();
+                Spinner team_spinner = (Spinner) findViewById(R.id.menu_teams);
+                team_spinner.setSelection(0);
+                currentTeamViewing = TokenAccess.getUserName(getApplicationContext());
+                createTeamTable();
 
                 if (position == 0) {
                     menu_spinner.setVisibility(View.GONE);
@@ -143,7 +145,7 @@ public class DuringDraft extends AppCompatActivity {
         initPickBar();
         createTable();
         connectToSocket();
-        //init_team_spinner();
+        init_team_spinner();
     }
 
     @Override
@@ -239,7 +241,7 @@ public class DuringDraft extends AppCompatActivity {
         TableView<Player> tableView = (TableView<Player>) findViewById(R.id.team_table);
         teamPlayers = new ArrayList<>();
         teamTableDataAdapter = new TeamTableDataAdapter(this, teamPlayers);
-        tableView.setDataAdapter(playerTableDataAdapter);
+        tableView.setDataAdapter(teamTableDataAdapter);
         tableView.setHeaderAdapter(new SimpleTableHeaderAdapter(this, TABLE_HEADERS_team_view));
         RestApiCalls.getResponseArray(getApplicationContext(), "api/getPlayersTeamDrafted/" + draftId + "?user=" + currentTeamViewing,new VolleyCallbackWithArray() {
             @Override
@@ -254,8 +256,17 @@ public class DuringDraft extends AppCompatActivity {
                         player.setPostion(json.getString("postion"));
                         player.setId(json.getInt("id"));
                         player.setTeam(json.getString("team"));
-                        teamPlayers.add(player);
-
+                        int x = -2;
+                        for (int j = 0; j < teamPlayers.size(); j++) {
+                            Player existing = teamPlayers.get(j);
+                            if (existing.getId() == player.getId()) {
+                                x = j;
+                                break;
+                            }
+                        }
+                        if (x == -2) {
+                            teamPlayers.add(player);
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -306,16 +317,38 @@ public class DuringDraft extends AppCompatActivity {
                 int round = -1;
                 String userName = "";
                 int theId = -1;
+                Player thePlayerSelected = new Player();
                 try {
                     selectedPlayerJson = jsonObject.getJSONObject("thePlayer");
                     round = jsonObject.getInt("round");
                     pickNum = jsonObject.getInt("pickNumber");
                     userName = jsonObject.getString("username");
                     theId = selectedPlayerJson.getInt("id");
+                    thePlayerSelected.setId(theId);
+                    thePlayerSelected.setFirstName(selectedPlayerJson.getString("firstName"));
+                    thePlayerSelected.setLastName(selectedPlayerJson.getString("lastName"));
+                    thePlayerSelected.setTeam(selectedPlayerJson.getString("team"));
+                    thePlayerSelected.setPostion(selectedPlayerJson.getString("postion"));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
 
+                if (currentTeamViewing.compareTo(userName) == 0) {
+                    int x = -2;
+                    for (int j = 0; j < teamPlayers.size(); j++) {
+                        Player existing = teamPlayers.get(j);
+                        if (existing.getId() == thePlayerSelected.getId()) {
+                            x = j;
+                            break;
+                        }
+                    }
+                    if (x == -2) {
+                        teamPlayers.add(thePlayerSelected);
+                        teamTableDataAdapter.notifyDataSetChanged();
+                    }
+                }
+
+                // update list for draft table
                 for (Player p : playersInDraft) {
                     if (p.getId() == theId) {
                         break;
