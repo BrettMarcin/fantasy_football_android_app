@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:shrinkColumns="0">
+
+        <!-- first row of the table layout-->
+        <TableRow
+            android:id="@+id/row1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/pick_list"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                />
+            <Button
+                android:id="@+id/draft_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Draft" />
+        </TableRow>
+    </TableLayout>
+
+    <Spinner
+        android:id="@+id/menu_for_draft"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/player_selected"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top"
+        android:text="HelloView"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="18sp" />
+
+    <de.codecrafters.tableview.TableView
+        xmlns:table="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/draft_table"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        table:tableView_columnCount="4" />
+
+
+</LinearLayout>

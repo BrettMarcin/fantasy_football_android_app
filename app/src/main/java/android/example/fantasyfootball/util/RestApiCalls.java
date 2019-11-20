@@ -10,8 +10,10 @@ import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -104,7 +106,36 @@ public class RestApiCalls {
                         new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                Log.d(LOG_TAG, "Failed on: " + lastUrl);
+                                Log.d(LOG_TAG, "Failed on: http://10.0.2.2:8000/" + lastUrl + "\nBecause: " + error.getMessage());
+                            }
+                        }) {
+                    @Override
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+                        HashMap<String, String> headers = new HashMap<>();
+                        headers.put("Authorization", "Bearer " + TokenAccess.getAccessToken(context));
+                        return headers;
+                    }
+                };
+
+        MySingleton.getInstance(context).addToRequestQue(jsonObjectRequest);
+    }
+
+    public static void getResponseArray(final Context context, final String lastUrl,final VolleyCallbackWithArray callback) {
+        String url="http://10.0.2.2:8000/" + lastUrl;
+        JsonArrayRequest jsonObjectRequest = new
+                JsonArrayRequest(Request.Method.GET,
+                        url,
+                        null,
+                        new Response.Listener<JSONArray>() {
+                            @Override
+                            public void onResponse(JSONArray response) {
+                                callback.onSuccess(response);
+                            }
+                        },
+                        new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.d(LOG_TAG, "Failed on: http://10.0.2.2:8000/" + lastUrl + "\nBecause: " + error.getMessage());
                             }
                         }) {
                     @Override

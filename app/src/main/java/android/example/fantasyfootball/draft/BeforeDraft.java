@@ -122,11 +122,27 @@ public class BeforeDraft extends AppCompatActivity {
         });
     }
 
+    private void end() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Bundle conData = new Bundle();
+                conData.putString("param_result", "Start_draft");
+                Intent intent = new Intent();
+                intent.putExtras(conData);
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
+    }
+
     private void connectToSocket() {
         String charRoom = "/draft/chatRoom/" + draftId;
+        String draftStarted = "/draft/draftStarted/" + draftId;
         client = new SpringBootWebSocketClient();
         client.setId("sub-001");
         TopicHandler handler = client.subscribe(charRoom);
+        TopicHandler handler2 = client.subscribe(draftStarted);
         handler.addListener(new StompMessageListener() {
             @Override
             public void onMessage(StompMessage message) {
@@ -138,6 +154,12 @@ public class BeforeDraft extends AppCompatActivity {
                 }catch (JSONException err){
                     Log.d("Error", err.toString());
                 }
+            }
+        });
+        handler2.addListener(new StompMessageListener() {
+            @Override
+            public void onMessage(StompMessage message) {
+                end();
             }
         });
         client.connect("ws://10.0.2.2:8000/draft-socket");

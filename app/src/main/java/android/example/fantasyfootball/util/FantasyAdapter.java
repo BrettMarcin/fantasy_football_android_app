@@ -50,8 +50,6 @@ public class FantasyAdapter extends BaseAdapter {
             private final String text = txtSchoolTitle.getText().toString();
             @Override
             public void onClick(View view) {
-//                TextView txtSchoolTitle = (TextView) view.findViewById(R.id.txtDraftTitle);
-//                String id = txtSchoolTitle.getText().toString();
                 Intent activityIntent;
                 activityIntent = new Intent(mContext, DraftInterceptor.class);
                 activityIntent.putExtra("id", text);
