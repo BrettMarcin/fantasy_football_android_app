@@ -32,10 +32,28 @@
         </TableRow>
     </TableLayout>
 
-    <Spinner
-        android:id="@+id/menu_for_draft"
+    <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:stretchColumns="0">
+        <TableRow
+            android:id="@+id/table_1_row1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/timer"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="top"
+                android:text="Time"
+                android:textColor="@color/colorPrimaryDark"
+                android:textSize="24sp" />
+            <Spinner
+                android:id="@+id/menu_for_draft"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </TableRow>
+    </TableLayout>
 
     <TextView
         android:id="@+id/player_selected"
@@ -49,6 +67,17 @@
     <de.codecrafters.tableview.TableView
         xmlns:table="http://schemas.android.com/apk/res-auto"
         android:id="@+id/draft_table"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        table:tableView_columnCount="4" />
+
+    <Spinner
+        android:id="@+id/menu_teams"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <de.codecrafters.tableview.TableView
+        xmlns:table="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/team_table"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         table:tableView_columnCount="4" />

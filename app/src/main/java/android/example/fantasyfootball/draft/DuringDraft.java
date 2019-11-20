@@ -16,6 +16,7 @@ import android.example.fantasyfootball.util.RestApiCalls;
 import android.example.fantasyfootball.util.SpringBootWebSocketClient;
 import android.example.fantasyfootball.util.StompMessage;
 import android.example.fantasyfootball.util.StompMessageListener;
+import android.example.fantasyfootball.util.TeamTableDataAdapter;
 import android.example.fantasyfootball.util.TokenAccess;
 import android.example.fantasyfootball.util.TopicHandler;
 import android.example.fantasyfootball.util.VolleyCallback;
@@ -49,15 +50,27 @@ public class DuringDraft extends AppCompatActivity {
     private ArrayList<String> pickNums;
     private ArrayList<String> roundNum;
     private ArrayList<Player> playersInDraft;
+    private List<String> teamListForSpinner;
+    private ArrayAdapter<String> adapter_for_team_spinner;
     private SpringBootWebSocketClient client;
     private PicksAdapter adapter;
+
+    // Attributes for when you want to view a certain team #2 display
+    private String currentTeamViewing;
+    private TeamTableDataAdapter teamTableDataAdapter;
+    private List<Player> teamPlayers;
+    private static final String[] TABLE_HEADERS_team_view = { "first", "last", "pos", "team" };
+
+
+
     private PlayerTableDataAdapter playerTableDataAdapter;
     private String draftId;
     private Button draftButton;
     private Spinner menu;
     private TextView selectedPlayer;
+    private TextView timer;
     private Player playerSelected;
-    private static final String[] differentPages = { "Draft", "Team", "Draft History", "Message Board"};
+    private static final String[] differentPages = { "Draft", "Team", "Draft History"};
     private static final String[] TABLE_HEADERS = { "rank", "first", "last", "pos" };
 
     @Override
@@ -71,16 +84,43 @@ public class DuringDraft extends AppCompatActivity {
         if (TokenAccess.hasTokenExpired(getApplicationContext())) {
             finish();
         }
+        //team_title
 
+        timer = findViewById(R.id.timer);
         draftButton = findViewById(R.id.draft_button);
         selectedPlayer = findViewById(R.id.player_selected);
         draftButton.setEnabled(false);
         Spinner spinner = (Spinner) findViewById(R.id.menu_for_draft);
+
+
+        // Menu for different displays
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view,
                                        int position, long id) {
                 Object item = adapterView.getItemAtPosition(position);
+                Spinner menu_spinner = findViewById(R.id.menu_teams);
+                TableView<Player> tableView = (TableView<Player>) findViewById(R.id.draft_table);//team_table
+                TableView<Player> teamTable = (TableView<Player>) findViewById(R.id.team_table);
+                // set table back to original
+//                currentTeamViewing = TokenAccess.getUserName(getApplicationContext());
+//                createTeamTable();
+
+                if (position == 0) {
+                    menu_spinner.setVisibility(View.GONE);
+                    teamTable.setVisibility(View.GONE);
+                    selectedPlayer.setVisibility(View.VISIBLE);
+                    tableView.setVisibility(View.VISIBLE);
+
+                    // Team selection
+                } else if (position == 1) {
+                    // Hide draft info
+                    selectedPlayer.setVisibility(View.GONE);
+                    tableView.setVisibility(View.GONE);
+                    // Show team elements
+                    menu_spinner.setVisibility(View.VISIBLE);
+                    teamTable.setVisibility(View.VISIBLE);
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -103,6 +143,7 @@ public class DuringDraft extends AppCompatActivity {
         initPickBar();
         createTable();
         connectToSocket();
+        //init_team_spinner();
     }
 
     @Override
@@ -191,8 +232,37 @@ public class DuringDraft extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
+    }
 
+    public void createTeamTable() {
+        //currentTeamViewing
+        TableView<Player> tableView = (TableView<Player>) findViewById(R.id.team_table);
+        teamPlayers = new ArrayList<>();
+        teamTableDataAdapter = new TeamTableDataAdapter(this, teamPlayers);
+        tableView.setDataAdapter(playerTableDataAdapter);
+        tableView.setHeaderAdapter(new SimpleTableHeaderAdapter(this, TABLE_HEADERS_team_view));
+        RestApiCalls.getResponseArray(getApplicationContext(), "api/getPlayersTeamDrafted/" + draftId + "?user=" + currentTeamViewing,new VolleyCallbackWithArray() {
+            @Override
+            public void onSuccess(JSONArray response) {
+                for (int i = 0; i< response.length(); i++) {
+                    try {
+                        Player player = new Player();
+                        JSONObject json = response.getJSONObject(i);
+                        player.setRank_player(json.getInt("rank_player"));
+                        player.setFirstName(json.getString("firstName"));
+                        player.setLastName(json.getString("lastName"));
+                        player.setPostion(json.getString("postion"));
+                        player.setId(json.getInt("id"));
+                        player.setTeam(json.getString("team"));
+                        teamPlayers.add(player);
 
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                teamTableDataAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     public void draft_player(View view) throws JSONException {
@@ -278,16 +348,58 @@ public class DuringDraft extends AppCompatActivity {
         });
     }
 
+    private void init_team_spinner() {
+        Spinner team_spinner = (Spinner) findViewById(R.id.menu_teams);
+        teamListForSpinner = new ArrayList<>();
+        teamListForSpinner.add(TokenAccess.getUserName(getApplicationContext()));
+        adapter_for_team_spinner = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_item, teamListForSpinner);
+        team_spinner.setAdapter(adapter_for_team_spinner);
+
+        team_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view,
+                                       int position, long id) {
+                currentTeamViewing = adapterView.getItemAtPosition(position).toString();
+                createTeamTable();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                // TODO Auto-generated method stub
+            }});
+        // init list with players in the draft
+        RestApiCalls.getResponseArray(getApplicationContext(), "api/getPlayersDuringDraft/" + draftId,new VolleyCallbackWithArray() {
+            @Override
+            public void onSuccess(JSONArray response) {
+                for (int i = 0; i< response.length(); i++) {
+                    try {
+                        String team = (String)response.get(i);
+                        if (team.compareTo(TokenAccess.getUserName(getApplicationContext())) != 0) {
+                            teamListForSpinner.add(team);
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                adapter_for_team_spinner.notifyDataSetChanged();
+            }
+        });
+        currentTeamViewing = TokenAccess.getUserName(getApplicationContext());
+        createTeamTable();
+    }
+
     private void connectToSocket() {
         String charRoom = "/draft/pickSelected/" + draftId;
+        String timer = "/draft/timer/" + draftId;
         client = new SpringBootWebSocketClient();
         client.setId("sub-001");
         TopicHandler handler = client.subscribe(charRoom);
+        TopicHandler handler2 = client.subscribe(timer);
         handler.addListener(new StompMessageListener() {
             @Override
             public void onMessage(StompMessage message) {
                 try {
-                    System.out.println("Let's see");
                     JSONObject jsonObject = new JSONObject(message.getContent());
                     updateViews(jsonObject);
 
@@ -296,6 +408,46 @@ public class DuringDraft extends AppCompatActivity {
                 }
             }
         });
+        handler2.addListener(new StompMessageListener() {
+            @Override
+            public void onMessage(StompMessage message) {
+                try {
+                    JSONObject jsonObject = new JSONObject(message.getContent());
+                    updateTime(jsonObject);
+
+                }catch (JSONException err){
+                    Log.d("Error", err.toString());
+                }
+            }
+        });
         client.connect("ws://10.0.2.2:8000/draft-socket");
+    }
+
+    private void updateTime(final JSONObject jsonObject) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    int time = jsonObject.getInt("theTime");
+                    long millis = time % 1000;
+                    long second = (time / 1000) % 60;
+                    long minute = (time / (1000 * 60)) % 60;
+                    long hour = (time / (1000 * 60 * 60)) % 24;
+
+                    String minutes = (minute < 10) ? "0" + String.valueOf(minute) : String.valueOf(minute);
+                    String sec = (second < 10) ? "0" + String.valueOf(second) : String.valueOf(second);
+
+                    String timeString = "";
+                    if ((60 - second) < 10) {
+                        timeString = (String.valueOf(1 - minute)) + ":0" + String.valueOf(60 - second);
+                    } else {
+                        timeString = String.valueOf(1 - minute) + ":" + String.valueOf(60 - second);
+                    }
+                    timer.setText(timeString);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }
