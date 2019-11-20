@@ -33,6 +33,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        init();
+
+    }
+
+    public void init() {
         if (TokenAccess.hasTokenExpired(getApplicationContext())) {
             finish();
         }
@@ -90,9 +95,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume()
     {
         super.onResume();
-        if (TokenAccess.hasTokenExpired(getApplicationContext())) {
-            finish();
-        }
+        init();
     }
 
     @Override

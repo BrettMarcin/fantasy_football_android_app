@@ -11,6 +11,7 @@ public class TokenAccess extends Application {
     private static TokenAccess sInstance;
     private static final String LOG_TAG = TokenAccess.class.getSimpleName();
     String accessToken;
+    public static String userName;
 
     @Override
     public void onCreate(){
@@ -26,6 +27,11 @@ public class TokenAccess extends Application {
     public static String getAccessToken(final Context context) {
         SharedPreferences prefs = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
         return prefs.getString("token","");
+    }
+
+    public static String getUserName(final Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
+        return prefs.getString("userName","");
     }
 
     private void setToken(String token) {
@@ -52,6 +58,7 @@ public class TokenAccess extends Application {
                 return false;
             } else {
                 prefs.edit().remove("time").commit();
+                prefs.edit().remove("userName").commit();
                 prefs.edit().remove("token").commit();
                 return true;
             }

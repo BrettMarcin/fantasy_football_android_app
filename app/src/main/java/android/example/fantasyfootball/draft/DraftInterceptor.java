@@ -19,15 +19,12 @@ import org.json.JSONObject;
 public class DraftInterceptor extends AppCompatActivity {
 
     private static final String LOG_TAG = DraftInterceptor.class.getSimpleName();
+    private String draftDetails;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // make sure user is still authenicated
-        if (TokenAccess.hasTokenExpired(getApplicationContext())) {
-            finish();
-        }
-
+        //init();
         Intent activityIntent = getIntent();
         String id = activityIntent.getStringExtra("id");
         RestApiCalls.getResponse(getApplicationContext(), "api/getDraftDetails/" + id,new VolleyCallback() {
@@ -36,11 +33,17 @@ public class DraftInterceptor extends AppCompatActivity {
                 try {
                     Boolean started = (Boolean)response.get("draftStarted");
                     if (started) {
-
-                    } else {
-                        Intent i = new Intent(getBaseContext(), BeforeDraft.class);
+                        Intent i = new Intent(getBaseContext(), DuringDraft.class);
+                        draftDetails = response.toString();
                         i.putExtra("sampleObject", response.toString());
                         startActivity(i);
+                    } else {
+                        Intent i = new Intent(getBaseContext(), BeforeDraft.class);
+                        draftDetails = response.toString();
+                        i.putExtra("sampleObject", response.toString());
+//                        startActivity(i);
+                        startActivityForResult(i, 1);
+
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -53,8 +56,18 @@ public class DraftInterceptor extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (TokenAccess.hasTokenExpired(getApplicationContext())) {
-            finish();
+        //init();
+    }
+
+    // response code return from draft start = 1 otherwise is 0
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == 1) {
+            Intent i = new Intent(getBaseContext(), DuringDraft.class);
+            i.putExtra("sampleObject", draftDetails);
+            startActivity(i);
         }
+
     }
 }
