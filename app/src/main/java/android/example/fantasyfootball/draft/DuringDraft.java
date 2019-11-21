@@ -9,24 +9,27 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.example.fantasyfootball.R;
 
-import android.example.fantasyfootball.util.PicksAdapter;
+import android.example.fantasyfootball.util.Pick;
+import android.example.fantasyfootball.util.adapter.PickTableHistoryAdapter;
+import android.example.fantasyfootball.util.adapter.PicksAdapter;
 import android.example.fantasyfootball.util.Player;
-import android.example.fantasyfootball.util.PlayerTableDataAdapter;
-import android.example.fantasyfootball.util.RestApiCalls;
-import android.example.fantasyfootball.util.SpringBootWebSocketClient;
-import android.example.fantasyfootball.util.StompMessage;
-import android.example.fantasyfootball.util.StompMessageListener;
-import android.example.fantasyfootball.util.TeamTableDataAdapter;
+import android.example.fantasyfootball.util.adapter.PlayerTableDataAdapter;
+import android.example.fantasyfootball.util.network.RestApiCalls;
+import android.example.fantasyfootball.util.websocket.SpringBootWebSocketClient;
+import android.example.fantasyfootball.util.websocket.StompMessage;
+import android.example.fantasyfootball.util.websocket.StompMessageListener;
+import android.example.fantasyfootball.util.adapter.TeamTableDataAdapter;
 import android.example.fantasyfootball.util.TokenAccess;
-import android.example.fantasyfootball.util.TopicHandler;
-import android.example.fantasyfootball.util.VolleyCallback;
-import android.example.fantasyfootball.util.VolleyCallbackWithArray;
+import android.example.fantasyfootball.util.websocket.TopicHandler;
+import android.example.fantasyfootball.util.network.VolleyCallback;
+import android.example.fantasyfootball.util.network.VolleyCallbackWithArray;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,13 +38,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
 import de.codecrafters.tableview.TableView;
 import de.codecrafters.tableview.listeners.TableDataClickListener;
-import de.codecrafters.tableview.toolkit.SimpleTableDataAdapter;
 import de.codecrafters.tableview.toolkit.SimpleTableHeaderAdapter;
 
 public class DuringDraft extends AppCompatActivity {
@@ -60,6 +61,14 @@ public class DuringDraft extends AppCompatActivity {
     private TeamTableDataAdapter teamTableDataAdapter;
     private List<Player> teamPlayers;
     private static final String[] TABLE_HEADERS_team_view = { "first", "last", "pos", "team" };
+
+    // #3 pick history
+//    private ListView pickViewHistory;
+//    private ArrayAdapter<String> pickViewHistoryAdapter;
+    private PickTableHistoryAdapter pickTableHistoryAdapter;
+    private TableView<Pick> draftHistoryTable;
+    private static final String[] TABLE_HEADERS_draft_histroy = { "round", "pick", "first", "last", "user" };
+    private ArrayList<Pick> pickViewHistoryArray;
 
 
 
@@ -100,6 +109,7 @@ public class DuringDraft extends AppCompatActivity {
                                        int position, long id) {
                 Object item = adapterView.getItemAtPosition(position);
                 Spinner menu_spinner = findViewById(R.id.menu_teams);
+                //ListView pick_history = findViewById(R.id.draft_history);
                 TableView<Player> tableView = (TableView<Player>) findViewById(R.id.draft_table);//team_table
                 TableView<Player> teamTable = (TableView<Player>) findViewById(R.id.team_table);
                 // set table back to original
@@ -111,6 +121,8 @@ public class DuringDraft extends AppCompatActivity {
                 if (position == 0) {
                     menu_spinner.setVisibility(View.GONE);
                     teamTable.setVisibility(View.GONE);
+                    draftHistoryTable.setVisibility(View.GONE);
+
                     selectedPlayer.setVisibility(View.VISIBLE);
                     tableView.setVisibility(View.VISIBLE);
 
@@ -119,9 +131,18 @@ public class DuringDraft extends AppCompatActivity {
                     // Hide draft info
                     selectedPlayer.setVisibility(View.GONE);
                     tableView.setVisibility(View.GONE);
+                    draftHistoryTable.setVisibility(View.GONE);
                     // Show team elements
                     menu_spinner.setVisibility(View.VISIBLE);
                     teamTable.setVisibility(View.VISIBLE);
+                } else if (position == 2) {
+                    draftHistoryTable.setVisibility(View.VISIBLE);
+
+                    // everything else hide
+                    selectedPlayer.setVisibility(View.GONE);
+                    tableView.setVisibility(View.GONE);
+                    menu_spinner.setVisibility(View.GONE);
+                    teamTable.setVisibility(View.GONE);
                 }
             }
             @Override
@@ -146,6 +167,7 @@ public class DuringDraft extends AppCompatActivity {
         createTable();
         connectToSocket();
         init_team_spinner();
+        initHistoryView();
     }
 
     @Override
@@ -307,6 +329,59 @@ public class DuringDraft extends AppCompatActivity {
         }
     }
 
+    private void initHistoryView() {
+        draftHistoryTable = findViewById(R.id.draft_history);
+        draftHistoryTable.setVisibility(View.GONE);
+        pickViewHistoryArray = new ArrayList<Pick>();
+        pickTableHistoryAdapter = new PickTableHistoryAdapter(getApplicationContext(), pickViewHistoryArray);
+        draftHistoryTable.setDataAdapter(pickTableHistoryAdapter);
+        draftHistoryTable.setHeaderAdapter(new SimpleTableHeaderAdapter(this, TABLE_HEADERS_draft_histroy));
+        RestApiCalls.getResponseArray(getApplicationContext(), "api/getPickHistory/" + draftId,new VolleyCallbackWithArray() {
+            @Override
+            public void onSuccess(JSONArray response) {
+                int pickNum = -1;
+                int round = -1;
+                String userName = "";
+                int theId = -1;
+                JSONObject selectedPlayerJson = null;
+                for (int i = 0; i< response.length(); i++) {
+                    try {
+                        JSONObject json = (JSONObject)response.get(i);
+                        selectedPlayerJson = json.getJSONObject("thePlayer");
+                        round = json.getInt("round");
+                        pickNum = json.getInt("pickNumber");
+                        userName = json.getString("username");
+                        String first = selectedPlayerJson.getString("firstName");
+                        String last = selectedPlayerJson.getString("lastName");
+                        Player p = new Player();
+                        p.setFirstName(first);
+                        p.setLastName(last);
+
+                        Pick pick = new Pick();
+                        pick.setPlayer(p);
+                        pick.setUsername(userName);
+                        pick.setRound(round);
+                        pick.setPickNumber(pickNum);
+                        boolean alreadyInList = false;
+                        for (Pick thePick : pickViewHistoryArray) {
+                            if (thePick.getPickNumber() == pickNum && thePick.getRound() == round && first.compareTo(thePick.getPlayer().getFirstName()) == 0 && last.compareTo(thePick.getPlayer().getLastName()) == 0 && userName.compareTo(thePick.getUsername()) == 0) {
+                                alreadyInList = true;
+                                break;
+                            }
+                        }
+                        if (!alreadyInList) {
+                            pickViewHistoryArray.add(pick);
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                pickTableHistoryAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
     private void updateViews(final JSONObject jsonObject){
         runOnUiThread(new Runnable() {
             @Override
@@ -318,6 +393,7 @@ public class DuringDraft extends AppCompatActivity {
                 String userName = "";
                 int theId = -1;
                 Player thePlayerSelected = new Player();
+                Pick pick = new Pick();
                 try {
                     selectedPlayerJson = jsonObject.getJSONObject("thePlayer");
                     round = jsonObject.getInt("round");
@@ -329,8 +405,26 @@ public class DuringDraft extends AppCompatActivity {
                     thePlayerSelected.setLastName(selectedPlayerJson.getString("lastName"));
                     thePlayerSelected.setTeam(selectedPlayerJson.getString("team"));
                     thePlayerSelected.setPostion(selectedPlayerJson.getString("postion"));
+
+                    pick.setPlayer(thePlayerSelected);
+                    pick.setRound(round);
+                    pick.setPickNumber(pickNum);
+                    pick.setUsername(userName);
                 } catch (JSONException e) {
                     e.printStackTrace();
+                }
+
+                // check for duplicates in the  pick history
+                boolean alreadyInList = false;
+                for (Pick thePick : pickViewHistoryArray) {
+                    if (thePick.getPickNumber() == pickNum && thePick.getRound() == round && thePlayerSelected.getFirstName().compareTo(thePick.getPlayer().getFirstName()) == 0 && thePlayerSelected.getLastName().compareTo(thePick.getPlayer().getLastName()) == 0 && userName.compareTo(thePick.getUsername()) == 0) {
+                        alreadyInList = true;
+                        break;
+                    }
+                }
+                if (!alreadyInList) {
+                    pickViewHistoryArray.add(pick);
+                    pickTableHistoryAdapter.notifyDataSetChanged();
                 }
 
                 if (currentTeamViewing.compareTo(userName) == 0) {
@@ -425,10 +519,12 @@ public class DuringDraft extends AppCompatActivity {
     private void connectToSocket() {
         String charRoom = "/draft/pickSelected/" + draftId;
         String timer = "/draft/timer/" + draftId;
+        String endDraft = "/draft/hasDraftEnded/" + draftId;
         client = new SpringBootWebSocketClient();
         client.setId("sub-001");
         TopicHandler handler = client.subscribe(charRoom);
         TopicHandler handler2 = client.subscribe(timer);
+        TopicHandler handler3 = client.subscribe(endDraft);
         handler.addListener(new StompMessageListener() {
             @Override
             public void onMessage(StompMessage message) {
@@ -453,7 +549,30 @@ public class DuringDraft extends AppCompatActivity {
                 }
             }
         });
+
+        handler3.addListener(new StompMessageListener() {
+            @Override
+            public void onMessage(StompMessage message) {
+                end();
+            }
+        });
+
         client.connect("ws://10.0.2.2:8000/draft-socket");
+    }
+
+    private void end() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), "Draft has started!", Toast.LENGTH_SHORT);
+                Bundle conData = new Bundle();
+                conData.putString("param_result", "Draft_end");
+                Intent intent = new Intent();
+                intent.putExtras(conData);
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+        });
     }
 
     private void updateTime(final JSONObject jsonObject) {

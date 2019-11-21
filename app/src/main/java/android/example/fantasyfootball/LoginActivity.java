@@ -2,7 +2,7 @@ package android.example.fantasyfootball;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.example.fantasyfootball.util.RestApiCalls;
+import android.example.fantasyfootball.util.network.RestApiCalls;
 import android.example.fantasyfootball.util.TokenAccess;
 import android.os.Bundle;
 import android.text.Editable;

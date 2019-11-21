@@ -2,10 +2,10 @@ package android.example.fantasyfootball;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.example.fantasyfootball.util.FantasyAdapter;
-import android.example.fantasyfootball.util.RestApiCalls;
+import android.example.fantasyfootball.util.adapter.FantasyAdapter;
+import android.example.fantasyfootball.util.network.RestApiCalls;
 import android.example.fantasyfootball.util.TokenAccess;
-import android.example.fantasyfootball.util.VolleyCallback;
+import android.example.fantasyfootball.util.network.VolleyCallback;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;

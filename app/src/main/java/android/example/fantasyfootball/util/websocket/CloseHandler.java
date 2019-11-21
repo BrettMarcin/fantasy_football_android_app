@@ -1,4 +1,4 @@
-package android.example.fantasyfootball.util;
+package android.example.fantasyfootball.util.websocket;
 
 import okhttp3.WebSocket;
 

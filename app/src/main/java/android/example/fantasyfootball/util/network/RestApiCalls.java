@@ -1,9 +1,9 @@
 package android.example.fantasyfootball.util;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.example.fantasyfootball.draft.BeforeDraft;
+import android.example.fantasyfootball.util.network.VolleyCallback;
+import android.example.fantasyfootball.util.network.VolleyCallbackWithArray;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
