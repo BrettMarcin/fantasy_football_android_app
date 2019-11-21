@@ -1,38 +1,27 @@
 package android.example.fantasyfootball.draft;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.OnLifecycleEvent;
 
 import android.content.Intent;
 import android.example.fantasyfootball.R;
-import android.example.fantasyfootball.util.Message;
-import android.example.fantasyfootball.util.MessageAdapter;
-import android.example.fantasyfootball.util.RestApiCalls;
-import android.example.fantasyfootball.util.SpringBootWebSocketClient;
-import android.example.fantasyfootball.util.StompMessage;
-import android.example.fantasyfootball.util.StompMessageListener;
+import android.example.fantasyfootball.util.adapter.MessageAdapter;
+import android.example.fantasyfootball.util.network.RestApiCalls;
+import android.example.fantasyfootball.util.websocket.SpringBootWebSocketClient;
+import android.example.fantasyfootball.util.websocket.StompMessage;
+import android.example.fantasyfootball.util.websocket.StompMessageListener;
 import android.example.fantasyfootball.util.TokenAccess;
-import android.example.fantasyfootball.util.TopicHandler;
-import android.example.fantasyfootball.util.VolleyCallback;
-import android.graphics.Color;
+import android.example.fantasyfootball.util.websocket.TopicHandler;
+import android.example.fantasyfootball.util.network.VolleyCallback;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,6 +43,33 @@ public class BeforeDraft extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_before_draft);
+        // Check if the the user  is still logged in
+        init();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        client.disconnect();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        client.disconnect();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        init();
+    }
+
+    private void init() {
+        if (TokenAccess.hasTokenExpired(getApplicationContext())) {
+            finish();
+        }
+
         messageText = (EditText)findViewById(R.id.message_text);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
@@ -74,11 +90,6 @@ public class BeforeDraft extends AppCompatActivity {
             Log.d("Error", err.toString());
         }
 
-        // Check if the the user  is still logged in
-        if (TokenAccess.hasTokenExpired(getApplicationContext())) {
-            finish();
-        }
-
         getButtons();
         TextView t = findViewById(R.id.draft_header);
         t.setText("Draft " + draftId);
@@ -88,27 +99,7 @@ public class BeforeDraft extends AppCompatActivity {
         messagesView = findViewById(R.id.messages);
         messageAdapter = new MessageAdapter(BeforeDraft.this, messages);
         messagesView.setAdapter(messageAdapter);
-        //Log.i(LOG_TAG, );
 
-        connectToSocket();
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        client.disconnect();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        client.disconnect();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         connectToSocket();
     }
 
@@ -128,6 +119,7 @@ public class BeforeDraft extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Toast.makeText(getApplicationContext(), "Draft has started!", Toast.LENGTH_SHORT);
                 Bundle conData = new Bundle();
                 conData.putString("param_result", "Start_draft");
                 Intent intent = new Intent();

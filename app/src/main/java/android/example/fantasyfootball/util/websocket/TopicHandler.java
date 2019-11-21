@@ -1,4 +1,7 @@
-package android.example.fantasyfootball.util;
+package android.example.fantasyfootball.util.websocket;
+
+import android.example.fantasyfootball.util.websocket.StompMessage;
+import android.example.fantasyfootball.util.websocket.StompMessageListener;
 
 import java.util.HashSet;
 import java.util.Set;

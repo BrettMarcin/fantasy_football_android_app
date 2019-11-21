@@ -1,18 +1,13 @@
 package android.example.fantasyfootball.draft;
 
 import android.content.Intent;
-import android.example.fantasyfootball.LoginActivity;
-import android.example.fantasyfootball.MainActivity;
-import android.example.fantasyfootball.util.RestApiCalls;
-import android.example.fantasyfootball.util.TokenAccess;
-import android.example.fantasyfootball.util.VolleyCallback;
+import android.example.fantasyfootball.util.network.RestApiCalls;
+import android.example.fantasyfootball.util.network.VolleyCallback;
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,19 +26,22 @@ public class DraftInterceptor extends AppCompatActivity {
             @Override
             public void onSuccess(JSONObject response){
                 try {
-                    Boolean started = (Boolean)response.get("draftStarted");
-                    if (started) {
+                    String started = response.getString("wasRunning");
+                    if (started.compareTo("running") == 0) {
                         Intent i = new Intent(getBaseContext(), DuringDraft.class);
                         draftDetails = response.toString();
                         i.putExtra("sampleObject", response.toString());
-                        startActivity(i);
-                    } else {
+                        startActivityForResult(i, RESULT_OK);
+                    } else if(started.compareTo("no") == 0){
                         Intent i = new Intent(getBaseContext(), BeforeDraft.class);
                         draftDetails = response.toString();
                         i.putExtra("sampleObject", response.toString());
-//                        startActivity(i);
-                        startActivityForResult(i, 1);
-
+                        startActivityForResult(i, RESULT_OK);
+                    } else {
+                        Intent i = new Intent(getBaseContext(), AfterDraft.class);
+                        draftDetails = response.toString();
+                        i.putExtra("sampleObject", response.toString());
+                        startActivityForResult(i, RESULT_OK);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

@@ -1,12 +1,7 @@
-package android.example.fantasyfootball.util;
-
-import android.os.Build;
-import android.util.Log;
+package android.example.fantasyfootball.util.websocket;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.WebSocket;
 import okhttp3.OkHttpClient;
@@ -14,8 +9,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
-
-import okhttp3.Response;
 
 /**
  * Created by chen0 on 9/12/2017.
