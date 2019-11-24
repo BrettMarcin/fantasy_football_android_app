@@ -1,10 +1,10 @@
-package android.example.fantasyfootball.util;
+package android.example.fantasyfootball.util.network;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.example.fantasyfootball.util.network.VolleyCallback;
-import android.example.fantasyfootball.util.network.VolleyCallbackWithArray;
+import android.example.fantasyfootball.util.TokenAccess;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -27,7 +27,7 @@ public class RestApiCalls {
 
     private static final String LOG_TAG = RestApiCalls.class.getSimpleName();
 
-    public static void loginService(final Context context, String account, String pass) {
+    public static void loginService(final Context context, String account, String pass, final VolleyCallback callback) {
         String url="http://10.0.2.2:8000/api/auth/signin";
         final JSONObject obj=new JSONObject();
         try{
@@ -72,6 +72,7 @@ public class RestApiCalls {
                                     String userName=response.getString("userName");
                                     edit.putString("userName",userName);
                                     edit.commit();
+                                    callback.onSuccess(response);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -85,6 +86,7 @@ public class RestApiCalls {
                     public void onErrorResponse(VolleyError error) {
                         String log = error.getMessage();
                         Log.d(LOG_TAG, log);
+                        Toast.makeText(context, "Failed to log in", Toast.LENGTH_SHORT);
                     }
 
                 });
@@ -248,6 +250,32 @@ public class RestApiCalls {
         String url="http://10.0.2.2:8000/api/pickPlayer/" + draftId;
 
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, thePlayer,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        callback.onSuccess(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(LOG_TAG, "Failed on: ");
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer " + TokenAccess.getAccessToken(context));
+                return headers;
+            }
+        };
+        MySingleton.getInstance(context).addToRequestQue(req);
+    }
+
+    public static void createDraft(final Context context, JSONObject draft, final VolleyCallback callback) {
+        String url="http://10.0.2.2:8000/api/createDraft";
+
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, draft,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {

@@ -91,6 +91,8 @@ public class DuringDraft extends AppCompatActivity {
 
     private void init() {
         if (TokenAccess.hasTokenExpired(getApplicationContext())) {
+            Intent intent = new Intent();
+            setResult(-1, intent);
             finish();
         }
         //team_title
@@ -501,7 +503,7 @@ public class DuringDraft extends AppCompatActivity {
                 for (int i = 0; i< response.length(); i++) {
                     try {
                         String team = (String)response.get(i);
-                        if (team.compareTo(TokenAccess.getUserName(getApplicationContext())) != 0) {
+                        if (team.compareTo(TokenAccess.getUserName(getApplicationContext())) != 0 && !teamListForSpinner.contains(team)) {
                             teamListForSpinner.add(team);
                         }
 
@@ -569,7 +571,7 @@ public class DuringDraft extends AppCompatActivity {
                 conData.putString("param_result", "Draft_end");
                 Intent intent = new Intent();
                 intent.putExtras(conData);
-                setResult(RESULT_OK, intent);
+                setResult(2, intent);
                 finish();
             }
         });

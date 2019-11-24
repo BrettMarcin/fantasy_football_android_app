@@ -67,6 +67,8 @@ public class BeforeDraft extends AppCompatActivity {
 
     private void init() {
         if (TokenAccess.hasTokenExpired(getApplicationContext())) {
+            Intent intent = new Intent();
+            setResult(-1, intent);
             finish();
         }
 
@@ -124,7 +126,7 @@ public class BeforeDraft extends AppCompatActivity {
                 conData.putString("param_result", "Start_draft");
                 Intent intent = new Intent();
                 intent.putExtras(conData);
-                setResult(RESULT_OK, intent);
+                setResult(2, intent);
                 finish();
             }
         });
@@ -169,9 +171,7 @@ public class BeforeDraft extends AppCompatActivity {
                     RestApiCalls.startDraft(getApplicationContext(), draftId, new VolleyCallback() {
                         @Override
                         public void onSuccess(JSONObject response){
-                            View b = findViewById(R.id.accept_draft);
-                            b.setVisibility(View.GONE);
-                            Toast.makeText(getApplicationContext(), "Joined the draft!", Toast.LENGTH_SHORT);
+                            end();
                         }
                     });
                 }

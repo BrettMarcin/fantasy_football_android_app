@@ -1,4 +1,4 @@
-package android.example.fantasyfootball.util;
+package android.example.fantasyfootball.util.network;
 
 import android.content.Context;
 

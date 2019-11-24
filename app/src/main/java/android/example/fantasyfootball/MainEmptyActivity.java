@@ -21,7 +21,7 @@ public class MainEmptyActivity extends AppCompatActivity {
             activityIntent = new Intent(this, LoginActivity.class);
         }
         startActivity(activityIntent);
-        startActivity(getIntent());
+//        startActivity(getIntent());
         //finish();
     }
 
@@ -37,7 +37,7 @@ public class MainEmptyActivity extends AppCompatActivity {
             activityIntent = new Intent(this, LoginActivity.class);
         }
         startActivity(activityIntent);
-        startActivity(getIntent());
+//        startActivity(getIntent());
     }
 
 }

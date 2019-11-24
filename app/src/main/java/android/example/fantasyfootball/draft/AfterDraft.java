@@ -95,7 +95,7 @@ public class AfterDraft extends AppCompatActivity {
                 for (int i = 0; i< response.length(); i++) {
                     try {
                         String team = (String)response.get(i);
-                        if (team.compareTo(TokenAccess.getUserName(getApplicationContext())) != 0) {
+                        if (team.compareTo(TokenAccess.getUserName(getApplicationContext())) != 0 && !teamListForSpinner.contains(team)) {
                             teamListForSpinner.add(team);
                         }
 

@@ -2,13 +2,17 @@ package android.example.fantasyfootball;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.example.fantasyfootball.util.adapter.FantasyAdapter;
 import android.example.fantasyfootball.util.network.RestApiCalls;
 import android.example.fantasyfootball.util.TokenAccess;
 import android.example.fantasyfootball.util.network.VolleyCallback;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> yourDraftList;
     private ArrayList<String> publicDraftList;
     private ArrayList<String> invitedDraftList;
+    private Button createDraft;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         my_drafts_list = findViewById(R.id.scroll_your_drafts);
         invited_drafts_list = findViewById(R.id.scroll_view_invited_drafts);
         public_drafts_list = findViewById(R.id.scroll_view_public_drafts);
+        createDraft = findViewById(R.id.create_draft_button);
 //        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.scroll_your_drafts, yourDraftList);
         yourDraftAdapter = new FantasyAdapter(MainActivity.this, yourDraftList);
         publicDraftAdapter = new FantasyAdapter(MainActivity.this, publicDraftList);
@@ -88,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        createDraft.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                        Intent activityIntent = new Intent(getApplicationContext(), CreateDraftActivity.class);
+                        startActivity(activityIntent);
+                    }
+                });
     }
 
     // Maybe check onResume to see if drafts are still avaiable

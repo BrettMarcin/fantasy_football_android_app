@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".draft.AfterDraft"></activity>
+        <activity android:name=".CreateDraftActivity"></activity>
+        <activity android:name=".draft.AfterDraft" />
         <activity android:name=".draft.DuringDraft" />
         <activity android:name=".draft.BeforeDraft" />
         <activity android:name=".LoginActivity" />

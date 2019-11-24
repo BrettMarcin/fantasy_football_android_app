@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.example.fantasyfootball.util.network.RestApiCalls;
 import android.example.fantasyfootball.util.TokenAccess;
+import android.example.fantasyfootball.util.network.VolleyCallback;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -12,6 +13,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import org.json.JSONObject;
+
+import java.util.concurrent.TimeUnit;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -59,12 +64,21 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void login(View view) {
-        RestApiCalls.loginService(getApplicationContext(), emailText.getText().toString(), passText.getText().toString());
-        if (!TokenAccess.hasTokenExpired(getApplicationContext())) {
-            finish();
-        } else {
-            Toast.makeText(getApplicationContext(), "Failed to login", Toast.LENGTH_LONG).show();
-            Log.i(LOG_TAG, "It is null :(");
-        }
+        RestApiCalls.loginService(getApplicationContext(), emailText.getText().toString(), passText.getText().toString(), new VolleyCallback() {
+            @Override
+            public void onSuccess(JSONObject response){
+                Toast.makeText(getApplicationContext(), "Logged in!", Toast.LENGTH_SHORT);
+                int i = 0;
+                while (TokenAccess.hasTokenExpired(getApplicationContext()) && i < 3) {
+                    try {
+                        TimeUnit.SECONDS.sleep(3);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    i++;
+                }
+                finish();
+            }
+        });
     }
 }

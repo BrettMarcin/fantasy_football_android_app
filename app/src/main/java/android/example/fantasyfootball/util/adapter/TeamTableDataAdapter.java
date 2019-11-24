@@ -1,7 +1,8 @@
-package android.example.fantasyfootball.util;
+package android.example.fantasyfootball.util.adapter;
 
 import android.content.Context;
 import android.example.fantasyfootball.R;
+import android.example.fantasyfootball.util.Player;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

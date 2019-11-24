@@ -31,22 +31,22 @@ public class DraftInterceptor extends AppCompatActivity {
                         Intent i = new Intent(getBaseContext(), DuringDraft.class);
                         draftDetails = response.toString();
                         i.putExtra("sampleObject", response.toString());
-                        startActivityForResult(i, RESULT_OK);
+                        startActivityForResult(i, 2);
                     } else if(started.compareTo("no") == 0){
                         Intent i = new Intent(getBaseContext(), BeforeDraft.class);
                         draftDetails = response.toString();
                         i.putExtra("sampleObject", response.toString());
-                        startActivityForResult(i, RESULT_OK);
+                        startActivityForResult(i, 2);
                     } else {
                         Intent i = new Intent(getBaseContext(), AfterDraft.class);
                         draftDetails = response.toString();
                         i.putExtra("sampleObject", response.toString());
-                        startActivityForResult(i, RESULT_OK);
+                        startActivityForResult(i, 2);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                finish();
+                //finish();
             }
         });
     }
@@ -61,11 +61,22 @@ public class DraftInterceptor extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == 1) {
-            Intent i = new Intent(getBaseContext(), DuringDraft.class);
-            i.putExtra("sampleObject", draftDetails);
-            startActivity(i);
+//        super.onActivityResult();
+        String results = "";
+        if (data != null) {
+            results = data.getStringExtra("param_result");
         }
 
+        if (results.compareTo("Start_draft") == 0) {
+            Intent i = new Intent(getBaseContext(), DuringDraft.class);
+            i.putExtra("sampleObject", draftDetails);
+            startActivityForResult(i, 2);
+        } else if (results.compareTo("Draft_end") == 0) {
+            Intent i = new Intent(getBaseContext(), AfterDraft.class);
+            i.putExtra("sampleObject", draftDetails);
+            startActivityForResult(i, 2);
+        } else {
+            finish();
+        }
     }
 }

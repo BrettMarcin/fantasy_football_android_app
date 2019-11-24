@@ -4,6 +4,15 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Finished Draft View the Teams!"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
     <Spinner
         android:id="@+id/menu_teams"
         android:layout_width="wrap_content"
