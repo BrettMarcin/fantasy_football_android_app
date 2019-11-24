@@ -2,6 +2,7 @@ package android.example.fantasyfootball;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.example.fantasyfootball.util.network.RestApiCalls;
 import android.example.fantasyfootball.util.TokenAccess;
 import android.example.fantasyfootball.util.network.VolleyCallback;
@@ -80,5 +81,10 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    public void goToRegister(View view) {
+        Intent activityIntent = new Intent(this, Register.class);
+        startActivity(activityIntent);
     }
 }

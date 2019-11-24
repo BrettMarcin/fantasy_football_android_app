@@ -40,9 +40,8 @@ public class FantasyAdapter extends BaseAdapter {
         final TextView txtSchoolTitle = (TextView) view.findViewById(R.id.txtDraftTitle);
         Button btnAction = (Button) view.findViewById(R.id.btnAction);
 
-        // Set the title and button name
         txtSchoolTitle.setText(mArrDraftData.get(position));
-        btnAction.setText("Action " + position);
+//        btnAction.setText("Action " + position);
 
 
         // Click listener of button
